@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
+    <!-- <img src="./assets/logo.png"> -->
+    <img src="/static/logo.png">
     <p>{{ foo }}</p>
     <canvas id="canvas3" />
     <router-view></router-view>
@@ -9,6 +10,18 @@
 
 <script>
 /* eslint-disable no-console */
+
+const App = {
+  dblClickTime: 0,
+  scaleFactor: 1,
+  canvas: null,
+  spinner: null,
+  scene: null,
+  sceneOpacity: 0.8,
+  canvasScale() {
+
+  },
+};
 
 export default {
   name: 'app',
@@ -20,7 +33,11 @@ export default {
   mounted() {
     try {
       // create a wrapper around native canvas element (with id="c")
-      const canvas = new fabric.Canvas('canvas3');
+      App.canvas = new fabric.Canvas('canvas3', {
+        preserveObjectStacking: !0,
+        enableRetinaScaling: !1,
+        stopContextMenu: !0,
+      });
 
       // create a rectangle object
       const rect = new fabric.Rect({
@@ -32,7 +49,21 @@ export default {
       });
 
       // "add" rectangle onto canvas
-      canvas.add(rect);
+      App.canvas.add(rect);
+
+      fabric.Image.fromURL('/static/logo.png', (img) => {
+        // App.scene = {
+        //   $img: c,
+        //   fabricImg: img,
+        // };
+        img.set({
+          originX: 'left',
+          originY: 'top',
+          // opacity: ZM.sceneOpacity
+        });
+        App.canvas.setWidth(img.width).setHeight(img.height);
+        App.canvas.setOverlayImage(img, App.canvasScale);
+      });
     } catch (error) {
       console.log('something is wrong with fabric init:', error);
     }
