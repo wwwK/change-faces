@@ -1,8 +1,7 @@
 <template>
   <div id="app">
     <!-- <img src="./assets/logo.png"> -->
-    <img src="/static/logo.png">
-    <p>{{ foo }}</p>
+    <!-- <p>{{ foo }}</p> -->
     <canvas id="canvas3" />
     <router-view></router-view>
   </div>
@@ -51,7 +50,7 @@ export default {
       // "add" rectangle onto canvas
       App.canvas.add(rect);
 
-      fabric.Image.fromURL('/static/logo.png', (img) => {
+      fabric.Image.fromURL('/static/400216478.png', (img) => {
         // App.scene = {
         //   $img: c,
         //   fabricImg: img,
@@ -59,10 +58,21 @@ export default {
         img.set({
           originX: 'left',
           originY: 'top',
-          // opacity: ZM.sceneOpacity
+          opacity: App.sceneOpacity,
         });
         App.canvas.setWidth(img.width).setHeight(img.height);
         App.canvas.setOverlayImage(img, App.canvasScale);
+      });
+      fabric.Image.fromURL('/static/3b2014dcefb972a6.png', (img) => {
+        img.scale(0.4).setCoords();
+        img.set({
+          uid: 0,
+          left: 836,
+          top: 195,
+        });
+        App.canvas.add(img);
+        App.canvas.setActiveObject(img);
+        // App.showObjProps(img);
       });
     } catch (error) {
       console.log('something is wrong with fabric init:', error);
