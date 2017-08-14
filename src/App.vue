@@ -86,7 +86,7 @@ export default {
       App.canvas.add(rect);
 
       // backgroud
-      fabric.Image.fromURL('/static/400216478.png', (img) => {
+      fabric.Image.fromURL('./static/400216478.png', (img) => {
         App.scene = {
           // $img: c,
           fabricImg: img,
@@ -101,7 +101,7 @@ export default {
       });
 
       // foregroud
-      fabric.Image.fromURL('/static/3b2014dcefb972a6.png', (img) => {
+      fabric.Image.fromURL('./static/3b2014dcefb972a6.png', (img) => {
         img.scale(0.6).setCoords();
         img.set({
           uid: 0,
