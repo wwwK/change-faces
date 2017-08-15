@@ -2,6 +2,17 @@
   <div id="app" :style="{ display: appDisplay }">
     <!-- <img src="./assets/logo.png"> -->
     <!-- <p>{{ foo }}</p> -->
+    <b-card title="Card Title"
+        img="https://lorempixel.com/600/300/food/5/"
+        img-alt="Image"
+        tag="article"
+        style="width: 20rem;"
+        class="mb-2">
+      <p class="card-text">
+        Some quick example text to build on the card title and make up the bulk of the card's content.
+      </p>
+      <b-button href="#" variant="primary">Go somewhere</b-button>
+    </b-card>
     <vue-slider v-model="value" :min="0" :max="1" :interval="0.01" v-on:callback="handleChange"></vue-slider>
     <div id="canvasRow">
       <div id="canvasContainer">
@@ -15,7 +26,14 @@
 <script>
 /* eslint-disable no-console */
 
+import Vue from 'vue';
+import BootstrapVue from 'bootstrap-vue';
 import vueSlider from 'vue-slider-component';
+
+import 'bootstrap/dist/css/bootstrap.css'; // eslint-disable-line import/no-extraneous-dependencies
+import 'bootstrap-vue/dist/bootstrap-vue.css';
+
+Vue.use(BootstrapVue);
 
 const App = {
   dblClickTime: 0,
