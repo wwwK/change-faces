@@ -1,19 +1,70 @@
 <template>
-  <div id="app" :style="{ display: appDisplay }">
-    <!-- <img src="./assets/logo.png"> -->
-    <!-- <p>{{ foo }}</p> -->
-    <b-card title="Card Title"
-        img="https://lorempixel.com/600/300/food/5/"
-        img-alt="Image"
-        tag="article"
-        style="width: 20rem;"
-        class="mb-2">
-      <p class="card-text">
-        Some quick example text to build on the card title and make up the bulk of the card's content.
-      </p>
-      <b-button href="#" variant="primary">Go somewhere</b-button>
+  <div id="app" class="container-fluid" :style="{ display: appDisplay }">
+
+    <!-- 更换背景和头像 -->
+    <b-card class="cf-tabs-card" no-block style="margin-bottom: 20px;">
+      <b-tabs small card ref="tabs" v-model="tabIndex">
+        <b-tab title="更换背景" class="scroller">
+          <div class="scene">
+            <img
+              @click="handleChangeScene"
+              src="../static/thumb_400216478-A.png"
+              data-src="400216478-A.png"
+              data-size="1280x960"
+              data-holes="596,353 689x410 0"
+            >
+          </div>
+          <div class="scene">
+            <img
+              @click="handleChangeScene"
+              src="../static/thumb_400216478-B.png"
+              data-src="400216478-B.png"
+              data-size="1280x960"
+              data-holes="596,353 689x410 0"
+            >
+          </div>
+          <div class="scene">
+            <img
+              @click="handleChangeScene"
+              src="../static/thumb_400216478-C.png"
+              data-src="400216478-C.png"
+              data-size="1280x960"
+              data-holes="596,353 689x410 0"
+            >
+          </div>
+          <div class="scene">
+            <img src="../static/thumb_400216478.png">
+          </div>
+          <div class="scene">
+            <img src="../static/thumb_400216478.png">
+          </div>
+          <div class="scene">
+            <img src="../static/thumb_400216478.png">
+          </div>
+          <div class="scene">
+            <img src="../static/thumb_400216478.png">
+          </div>
+        </b-tab>
+        <b-tab title="更换头像">
+          <div class="scene">
+            <img v-model="mugshots[0]" @click="handleChangeMugshot" src="../static/3b2014dcefb972a6.png">
+          </div>
+        </b-tab>
+      </b-tabs>
     </b-card>
-    <vue-slider v-model="value" :min="0" :max="1" :interval="0.01" v-on:callback="handleChange"></vue-slider>
+
+    <b-card
+      tag="article"
+      style="width: 100%;"
+      class="mb-2"
+    >
+      <vue-slider
+        v-model="sceneOpacity"
+        :min="0"
+        :max="1"
+        :interval="0.01"
+      ></vue-slider>
+    </b-card>
     <div id="canvasRow">
       <div id="canvasContainer">
         <canvas id="canvas" />
@@ -35,13 +86,14 @@ import 'bootstrap-vue/dist/bootstrap-vue.css';
 
 Vue.use(BootstrapVue);
 
+const defaultSceneOpacity = 0.5;
+
 const App = {
   dblClickTime: 0,
   scaleFactor: 1,
   canvas: null,
   spinner: null,
   scene: null,
-  sceneOpacity: 0.5,
   canvasScale() {
     const canvasWidth = App.canvas.getWidth();
     const canvasHeight = App.canvas.getHeight();
@@ -78,8 +130,12 @@ export default {
   data() {
     return {
       foo: 'bar',
-      value: App.sceneOpacity,
+      sceneOpacity: defaultSceneOpacity,
       appDisplay: 'block',
+      tabIndex: null,
+      mugshots: [
+        { uid: 0, src: '3b2014dcefb972a6.png' },
+      ],
     };
   },
   mounted() {
@@ -104,7 +160,7 @@ export default {
       App.canvas.add(rect);
 
       // backgroud
-      fabric.Image.fromURL('./static/400216478.png', (img) => {
+      fabric.Image.fromURL('./static/400216478-A.png', (img) => {
         App.scene = {
           // $img: c,
           fabricImg: img,
@@ -112,17 +168,18 @@ export default {
         img.set({
           originX: 'left',
           originY: 'top',
-          opacity: App.sceneOpacity,
+          opacity: this.sceneOpacity,
         });
         App.canvas.setWidth(img.width).setHeight(img.height);
         App.canvas.setOverlayImage(img, App.canvasScale);
       });
 
       // foregroud
-      fabric.Image.fromURL('./static/3b2014dcefb972a6.png', (img) => {
+      const firstUid = 0;
+      fabric.Image.fromURL(`./static/${this.mugshots.find(ms => ms.uid === firstUid).src}`, (img) => {
         img.scale(0.6).setCoords();
         img.set({
-          uid: 0,
+          uid: firstUid,
           left: 606,
           top: 355,
         });
@@ -138,22 +195,129 @@ export default {
     }
   },
   methods: {
-    handleChange(value) {
-      App.sceneOpacity = value;
-      App.scene.fabricImg.set('opacity', App.sceneOpacity);
+    handleChangeScene(event) {
+      function b(g, h, c) {
+        const dd = g[c].split(' ');
+        const ee = dd[0].split(',');
+        const f = +ee[0];
+        const k = +ee[1];
+        const e = dd[1].split('x');
+        const l = +e[0];
+        const q = +e[1];
+        const r = +dd[2];
+        const m = h[c];
+        // const ddd = $('#mugshots img[data-uid="' + m + '"]');
+        let ddd = null;
+        const imgs = document.getElementById('mugshots').querySelectorAll('img');
+        for (let index = 0; index < imgs.length; index += 1) {
+          if (imgs.item(index).getAttribute('data-uid') === m) {
+            ddd = imgs.item(index);
+          }
+        }
+        const n = ddd.getAttribute('src');
+        const d = ddd.getAttribute('data-size').split('x');
+        const t = +d[0];
+        const u = +d[1];
+        fabric.Image.fromURL(n, (img) => {
+          img.set({
+            url: n,
+            uid: m,
+            left: f,
+            top: k,
+            angle: r,
+            originX: 'center',
+            originY: 'center',
+            scaleX: l / t,
+            scaleY: q / u,
+          }).setCoords();
+          App.canvas.add(d);
+          if (c === 0) {
+            App.showObjProps(img);
+            App.canvas.setActiveObject(img);
+          }
+          // $('#mugshots img[data-uid="' + m + '"]').addClass("oncanvas");
+          ddd.className += ' oncanvas';
+          if (c < h.length - 1 && c < g.length - 1) {
+            b(g, h, c + 1);
+          } else {
+            App.canvas.renderAll();
+          }
+        });
+      }
+      const thumbImageElement = event.target;
+      const dddd = thumbImageElement.getAttribute('data-size').split('x');
+      const g = thumbImageElement.getAttribute('data-holes'); // 可能不止一个hole
+      const l = dddd[0];
+      const d = dddd[1];
+      const h = [];
+      App.canvas.forEachObject((obj) => {
+        if (obj.type === 'image') {
+          h.push(obj.uid);
+          // $('#mugshots img[data-uid="' + obj.uid + '"]').removeClass("oncanvas");
+          obj.remove();
+        }
+      });
+      App.canvas.setWidth(l).setHeight(d);
+      App.canvasScale();
+      fabric.Image.fromURL(`./static/${thumbImageElement.getAttribute('data-src')}`, (img) => {
+        App.scene = {
+          $img: thumbImageElement,
+          fabricImg: img,
+        };
+        img.set({
+          originX: 'left',
+          originY: 'top',
+          opacity: this.sceneOpacity,
+        });
+        App.canvas.setOverlayImage(img, () => {
+          if (h.length > 0) {
+            b(g, h, 0);
+          } else {
+            App.canvas.renderAll();
+          }
+        });
+      });
+    },
+    handleChangeMugshot() {
+
+    },
+  },
+  watch: {
+    sceneOpacity(newValue) {
+      App.scene.fabricImg.set('opacity', newValue);
       App.canvas.renderAll();
     },
   },
 };
 </script>
 
-<style>
+<style lang="less">
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
+  /*text-align: center;*/
   color: #2c3e50;
   margin-top: 60px;
+}
+
+/* 换背景和换头像 */
+.cf-tabs-card {
+  /* 标签页下的内容页 */
+  .tab-content {
+    padding: 10px;
+  }
+
+  /* 横向滚动 */
+  div.scroller {
+      overflow: auto;
+      white-space: nowrap;
+  }
+
+  /* 每个图片 */
+  div.mugshot, div.scene {
+    display: inline-block;
+    cursor: pointer;
+  }
 }
 </style>
