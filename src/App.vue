@@ -4,12 +4,12 @@
     <!-- 更换背景和头像 -->
     <b-card class="cf-tabs-card" no-block style="margin-bottom: 20px;">
       <b-tabs small card ref="tabs" v-model="tabIndex">
-        <b-tab title="更换背景" class="scroller">
+        <b-tab title="更换背景" class="scroller" id="scenes">
           <div class="scene">
             <img
               @click="handleChangeScene"
               src="../static/thumb_400216478-A.png"
-              data-src="400216478-A.png"
+              data-src="./static/400216478-A.png"
               data-size="1280x960"
               data-holes="596,353 689x410 0"
             >
@@ -31,18 +31,6 @@
               data-size="1280x960"
               data-holes="596,353 689x410 0"
             >
-          </div>
-          <div class="scene">
-            <img src="../static/thumb_400216478.png">
-          </div>
-          <div class="scene">
-            <img src="../static/thumb_400216478.png">
-          </div>
-          <div class="scene">
-            <img src="../static/thumb_400216478.png">
-          </div>
-          <div class="scene">
-            <img src="../static/thumb_400216478.png">
           </div>
         </b-tab>
         <b-tab title="更换头像">
@@ -75,6 +63,7 @@
 </template>
 
 <script>
+/* global $ */
 /* eslint-disable no-console */
 
 import Vue from 'vue';
@@ -98,23 +87,17 @@ const App = {
     const canvasWidth = App.canvas.getWidth();
     const canvasHeight = App.canvas.getHeight();
     const ratio = canvasWidth / canvasHeight;
-    // let canvasRowWidth = document.getElementById('canvasRow').style.width; // 200px : string
-    const canvasRowWidth = document.getElementById('canvasRow').clientWidth; // 200 : number
+    const canvasRowWidth = $('#canvasRow').width(); // 200 : number
     const canvasContainerWidth = Math.min(canvasRowWidth, canvasWidth);
     const canvasContainerHeight = Math.round(canvasContainerWidth / ratio);
-    // $("#canvasContainer").css({
-    //     width: canvasContainerWidth + 4 + "px",
-    //     height: canvasContainerHeight + 4 + "px"
-    // });
-    document.getElementById('canvasContainer').style.width = `${canvasContainerWidth}px`;
-    document.getElementById('canvasContainer').style.height = `${canvasContainerHeight}px`;
-    document.getElementsByClassName('canvas-container')[0].style.width = '100%';
-    document.getElementsByClassName('canvas-container')[0].style.height = '100%';
-    const canvasList = document.getElementsByTagName('canvas');
-    for (let i = 0; i < canvasList.length; i += 1) {
-      canvasList.item(i).style.width = '100%';
-      canvasList.item(i).style.height = '100%';
-    }
+    $('#canvasContainer').css({
+      width: `${canvasContainerWidth + 4}px`,
+      height: `${canvasContainerHeight + 4}px`,
+    });
+    $('canvas,.canvas-container').css({
+      width: '100%',
+      height: '100%',
+    });
     App.scaleFactor = canvasWidth / canvasContainerWidth;
     console.log('scale factor:', App.scaleFactor);
     App.canvas.renderAll();
@@ -127,12 +110,42 @@ export default {
   components: {
     vueSlider,
   },
+  // <b-tab title="更换背景" class="scroller" id="scenes">
+  //   <div class="scene">
+  //     <img
+  //       @click="handleChangeScene"
+  //       src="../static/thumb_400216478-A.png"
+  //       data-src="./static/400216478-A.png"
+  //       data-size="1280x960"
+  //       data-holes="596,353 689x410 0"
+  //     >
+  //   </div>
   data() {
     return {
       foo: 'bar',
       sceneOpacity: defaultSceneOpacity,
       appDisplay: 'block',
       tabIndex: null,
+      scenes: [
+        {
+          imgSrc: '../static/thumb_400216478-A.png',
+          dataSrc: './static/400216478-A.png',
+          dataSize: '1280x960',
+          dataHoles: '596,353 689x410 0',
+        },
+        {
+          imgSrc: '../static/thumb_400216478-B.png',
+          dataSrc: './static/400216478-B.png',
+          dataSize: '1280x960',
+          dataHoles: '596,353 689x410 0',
+        },
+        {
+          imgSrc: '../static/thumb_400216478-C.png',
+          dataSrc: './static/400216478-C.png',
+          dataSize: '1280x960',
+          dataHoles: '596,353 689x410 0',
+        },
+      ],
       mugshots: [
         { uid: 0, src: '3b2014dcefb972a6.png' },
       ],
@@ -159,10 +172,14 @@ export default {
       // "add" rectangle onto canvas
       App.canvas.add(rect);
 
-      // backgroud
-      fabric.Image.fromURL('./static/400216478-A.png', (img) => {
+      // 加载列表中第一个背景
+      fabric.Image.fromURL(this.scenes[0].dataSrc, (img) => {
+        if (img.getElement() === undefined) {
+          console.log('背景图片加载失败！');
+          return;
+        }
         App.scene = {
-          // $img: c,
+          // $img: c, // $('#scenes img:first')
           fabricImg: img,
         };
         img.set({
@@ -174,9 +191,13 @@ export default {
         App.canvas.setOverlayImage(img, App.canvasScale);
       });
 
-      // foregroud
+      // 脸
       const firstUid = 0;
       fabric.Image.fromURL(`./static/${this.mugshots.find(ms => ms.uid === firstUid).src}`, (img) => {
+        if (img.getElement() === undefined) {
+          console.log('脸图片加载失败！');
+          return;
+        }
         img.scale(0.6).setCoords();
         img.set({
           uid: firstUid,
@@ -189,7 +210,7 @@ export default {
       });
 
       App.canvasScale();
-      window.addEventListener('resize', App.canvasScale);
+      // window.addEventListener('resize', App.canvasScale);
     } catch (error) {
       console.log('something is wrong with fabric init:', error);
     }
@@ -206,16 +227,9 @@ export default {
         const q = +e[1];
         const r = +dd[2];
         const m = h[c];
-        // const ddd = $('#mugshots img[data-uid="' + m + '"]');
-        let ddd = null;
-        const imgs = document.getElementById('mugshots').querySelectorAll('img');
-        for (let index = 0; index < imgs.length; index += 1) {
-          if (imgs.item(index).getAttribute('data-uid') === m) {
-            ddd = imgs.item(index);
-          }
-        }
-        const n = ddd.getAttribute('src');
-        const d = ddd.getAttribute('data-size').split('x');
+        const ddd = $(`#mugshots img[data-uid="${m}"]`);
+        const n = ddd.attr('src');
+        const d = ddd.data('size').split('x');
         const t = +d[0];
         const u = +d[1];
         fabric.Image.fromURL(n, (img) => {
@@ -230,13 +244,12 @@ export default {
             scaleX: l / t,
             scaleY: q / u,
           }).setCoords();
-          App.canvas.add(d);
+          App.canvas.add(img);
           if (c === 0) {
             App.showObjProps(img);
             App.canvas.setActiveObject(img);
           }
-          // $('#mugshots img[data-uid="' + m + '"]').addClass("oncanvas");
-          ddd.className += ' oncanvas';
+          $(`#mugshots img[data-uid="${m}"]`).addClass('oncanvas');
           if (c < h.length - 1 && c < g.length - 1) {
             b(g, h, c + 1);
           } else {
@@ -244,24 +257,24 @@ export default {
           }
         });
       }
-      const thumbImageElement = event.target;
-      const dddd = thumbImageElement.getAttribute('data-size').split('x');
-      const g = thumbImageElement.getAttribute('data-holes'); // 可能不止一个hole
+      const $thumbImage = $(event.target);
+      const dddd = $thumbImage.data('size').split('x');
+      const g = $thumbImage.data('holes'); // 可能不止一个hole
       const l = dddd[0];
       const d = dddd[1];
       const h = [];
       App.canvas.forEachObject((obj) => {
         if (obj.type === 'image') {
           h.push(obj.uid);
-          // $('#mugshots img[data-uid="' + obj.uid + '"]').removeClass("oncanvas");
+          $(`#mugshots img[data-uid="${obj.uid}"]`).removeClass('oncanvas');
           obj.remove();
         }
       });
       App.canvas.setWidth(l).setHeight(d);
       App.canvasScale();
-      fabric.Image.fromURL(`./static/${thumbImageElement.getAttribute('data-src')}`, (img) => {
+      fabric.Image.fromURL(`./static/${$thumbImage.data('src')}`, (img) => {
         App.scene = {
-          $img: thumbImageElement,
+          // $img: $thumbImage,
           fabricImg: img,
         };
         img.set({
