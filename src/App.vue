@@ -5,37 +5,24 @@
     <b-card class="cf-tabs-card" no-block style="margin-bottom: 20px;">
       <b-tabs small card ref="tabs" v-model="tabIndex">
         <b-tab title="更换背景" class="scroller" id="scenes">
-          <div class="scene">
+          <div class="scene" v-for="scene in scenes">
             <img
               @click="handleChangeScene"
-              src="../static/thumb_400216478-A.png"
-              data-src="./static/400216478-A.png"
-              data-size="1280x960"
-              data-holes="596,353 689x410 0"
-            >
-          </div>
-          <div class="scene">
-            <img
-              @click="handleChangeScene"
-              src="../static/thumb_400216478-B.png"
-              data-src="400216478-B.png"
-              data-size="1280x960"
-              data-holes="596,353 689x410 0"
-            >
-          </div>
-          <div class="scene">
-            <img
-              @click="handleChangeScene"
-              src="../static/thumb_400216478-C.png"
-              data-src="400216478-C.png"
-              data-size="1280x960"
-              data-holes="596,353 689x410 0"
+              :src="'../static/scenes/' + scene.imgSrc"
+              :data-src="'./static/scenes/' + scene.dataSrc"
+              :data-size="scene.dataSize"
+              :data-holes="scene.dataHoles"
             >
           </div>
         </b-tab>
-        <b-tab title="更换头像">
-          <div class="scene">
-            <img v-model="mugshots[0]" @click="handleChangeMugshot" src="../static/3b2014dcefb972a6.png">
+        <b-tab title="更换头像" class="scroller" id="mugshots">
+          <div class="mugshot" v-for="mugshot in mugshots">
+            <img
+              @click="handleChangeMugshot"
+              :src="`../static/mugshots/${mugshot.imgSrc}`"
+              :data-uid="mugshot.dataUId"
+              :data-size="mugshot.dataSize"
+            >
           </div>
         </b-tab>
       </b-tabs>
@@ -55,6 +42,7 @@
     </b-card>
     <div id="canvasRow">
       <div id="canvasContainer">
+        <div id="objProps" style="display: block;"></div>
         <canvas id="canvas" />
       </div>
     </div>
@@ -103,6 +91,14 @@ const App = {
     App.canvas.renderAll();
     // (canvasWidth = App.canvas.getActiveObject()) && App.repositionContextMenu(canvasWidth);
   },
+  showObjProps(d) {
+    let c = Math.round(d.angle);
+    // c >= 360 && (c -= 360);
+    if (c >= 360) {
+      c -= 360;
+    }
+    $('#objProps').show().html(`${Math.round(d.left)},${Math.round(d.top)} | ${Math.round(d.width * d.scaleX)}x${Math.round(d.height * d.scaleY)} | ${c}&deg;`);
+  },
 };
 
 export default {
@@ -110,16 +106,6 @@ export default {
   components: {
     vueSlider,
   },
-  // <b-tab title="更换背景" class="scroller" id="scenes">
-  //   <div class="scene">
-  //     <img
-  //       @click="handleChangeScene"
-  //       src="../static/thumb_400216478-A.png"
-  //       data-src="./static/400216478-A.png"
-  //       data-size="1280x960"
-  //       data-holes="596,353 689x410 0"
-  //     >
-  //   </div>
   data() {
     return {
       foo: 'bar',
@@ -128,26 +114,36 @@ export default {
       tabIndex: null,
       scenes: [
         {
-          imgSrc: '../static/thumb_400216478-A.png',
-          dataSrc: './static/400216478-A.png',
+          imgSrc: '400216478_thumb.jpg',
+          dataSrc: '400216478.png',
           dataSize: '1280x960',
-          dataHoles: '596,353 689x410 0',
+          dataHoles: '["596,353 689x410 0"]',
         },
         {
-          imgSrc: '../static/thumb_400216478-B.png',
-          dataSrc: './static/400216478-B.png',
+          imgSrc: '989357250_thumb.jpg',
+          dataSrc: '989357250.png',
           dataSize: '1280x960',
-          dataHoles: '596,353 689x410 0',
+          dataHoles: '["596,353 689x410 0"]',
         },
         {
-          imgSrc: '../static/thumb_400216478-C.png',
-          dataSrc: './static/400216478-C.png',
+          imgSrc: '1912408125_thumb.jpg',
+          dataSrc: '1912408125.png',
           dataSize: '1280x960',
-          dataHoles: '596,353 689x410 0',
+          dataHoles: '["596,353 689x410 0"]',
+        },
+        {
+          imgSrc: '1960232057_thumb.jpg',
+          dataSrc: '1960232057.png',
+          dataSize: '1280x960',
+          dataHoles: '["596,353 689x410 0"]',
         },
       ],
       mugshots: [
-        { uid: 0, src: '3b2014dcefb972a6.png' },
+        {
+          imgSrc: '3b2014dcefb972a6.png',
+          dataUId: 0,
+          dataSize: '159x190',
+        },
       ],
     };
   },
@@ -173,7 +169,7 @@ export default {
       App.canvas.add(rect);
 
       // 加载列表中第一个背景
-      fabric.Image.fromURL(this.scenes[0].dataSrc, (img) => {
+      fabric.Image.fromURL(`./static/scenes/${this.scenes[0].dataSrc}`, (img) => {
         if (img.getElement() === undefined) {
           console.log('背景图片加载失败！');
           return;
@@ -193,7 +189,7 @@ export default {
 
       // 脸
       const firstUid = 0;
-      fabric.Image.fromURL(`./static/${this.mugshots.find(ms => ms.uid === firstUid).src}`, (img) => {
+      fabric.Image.fromURL(`./static/mugshots/${this.mugshots.find(ms => ms.dataUId === firstUid).imgSrc}`, (img) => {
         if (img.getElement() === undefined) {
           console.log('脸图片加载失败！');
           return;
@@ -272,7 +268,8 @@ export default {
       });
       App.canvas.setWidth(l).setHeight(d);
       App.canvasScale();
-      fabric.Image.fromURL(`./static/${$thumbImage.data('src')}`, (img) => {
+      // fabric.Image.fromURL(`./static/scenes/${$thumbImage.data('src')}`, (img) => {
+      fabric.Image.fromURL(`./${$thumbImage.data('src')}`, (img) => {
         App.scene = {
           // $img: $thumbImage,
           fabricImg: img,
@@ -330,7 +327,33 @@ export default {
   /* 每个图片 */
   div.mugshot, div.scene {
     display: inline-block;
+    margin-right: 4px;
     cursor: pointer;
   }
+}
+
+/* 画布 */
+#canvasRow {
+    background: #ccc;
+    position: relative
+}
+#canvasContainer {
+    background: url(./assets/canvas.gif);
+    border: 1px solid #cfcfcf;
+    position: relative;
+    width: 100%;
+    height: 100%
+}
+#objProps {
+  top: 0;
+  right: 0;
+  padding: 3px;
+  background: rgba(255,255,255,.8);
+  font-size: 11px;
+  z-index: 10;
+  display: none;
+}
+#contextMenu, #objProps {
+  position: absolute;
 }
 </style>
