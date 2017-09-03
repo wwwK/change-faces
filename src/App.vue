@@ -117,13 +117,13 @@ export default {
           imgSrc: '400216478_thumb.jpg',
           dataSrc: '400216478.png',
           dataSize: '1280x960',
-          dataHoles: '["596,353 689x410 0"]',
+          dataHoles: '["656,424 116x132 330"]',
         },
         {
           imgSrc: '989357250_thumb.jpg',
           dataSrc: '989357250.png',
           dataSize: '1280x960',
-          dataHoles: '["596,353 689x410 0"]',
+          dataHoles: '["842,464 146x171 0"]',
         },
         {
           imgSrc: '1912408125_thumb.jpg',
@@ -148,72 +148,149 @@ export default {
     };
   },
   mounted() {
-    try {
-      // create a wrapper around native canvas element (with id="c")
-      App.canvas = new fabric.Canvas('canvas', {
-        preserveObjectStacking: !0,
-        enableRetinaScaling: !1,
-        stopContextMenu: !0,
-      });
+    $(() => {
+      try {
+        // override default setting
+        fabric.Object.prototype.originX = 'center';
+        fabric.Object.prototype.originY = 'center';
+        fabric.Object.prototype.cornerColor = 'yellow';
+        fabric.Object.prototype.borderColor = 'red';
+        fabric.Object.prototype.cornerSize = 16;
 
-      // create a rectangle object
-      const rect = new fabric.Rect({
-        left: 100,
-        top: 100,
-        fill: 'red',
-        width: 20,
-        height: 20,
-      });
-
-      // "add" rectangle onto canvas
-      App.canvas.add(rect);
-
-      // 加载列表中第一个背景
-      fabric.Image.fromURL(`./static/scenes/${this.scenes[0].dataSrc}`, (img) => {
-        if (img.getElement() === undefined) {
-          console.log('背景图片加载失败！');
-          return;
-        }
-        App.scene = {
-          // $img: c, // $('#scenes img:first')
-          fabricImg: img,
-        };
-        img.set({
-          originX: 'left',
-          originY: 'top',
-          opacity: this.sceneOpacity,
+        // create a wrapper around native canvas element (with id="c")
+        App.canvas = new fabric.Canvas('canvas', {
+          preserveObjectStacking: !0,
+          enableRetinaScaling: !1,
+          stopContextMenu: !0,
         });
-        App.canvas.setWidth(img.width).setHeight(img.height);
-        App.canvas.setOverlayImage(img, App.canvasScale);
-      });
 
-      // 脸
-      const firstUid = 0;
-      fabric.Image.fromURL(`./static/mugshots/${this.mugshots.find(ms => ms.dataUId === firstUid).imgSrc}`, (img) => {
-        if (img.getElement() === undefined) {
-          console.log('脸图片加载失败！');
-          return;
-        }
-        img.scale(0.6).setCoords();
-        img.set({
-          uid: firstUid,
-          left: 606,
-          top: 355,
+        // create a rectangle object
+        const rect = new fabric.Rect({
+          left: 100,
+          top: 100,
+          fill: 'red',
+          width: 20,
+          height: 20,
         });
-        App.canvas.add(img);
-        App.canvas.setActiveObject(img);
-        // App.showObjProps(img);
-      });
 
-      App.canvasScale();
-      // window.addEventListener('resize', App.canvasScale);
-    } catch (error) {
-      console.log('something is wrong with fabric init:', error);
-    }
+        // "add" rectangle onto canvas
+        App.canvas.add(rect);
+
+        const $firstScene = $('#scenes img:first');
+
+        // 加载列表中第一个背景
+        fabric.Image.fromURL(`./static/scenes/${this.scenes[0].dataSrc}`, (img) => {
+          if (img.getElement() === undefined) {
+            console.log('背景图片加载失败！');
+            return;
+          }
+          App.scene = {
+            $img: $firstScene,
+            fabricImg: img,
+          };
+          img.set({
+            originX: 'left',
+            originY: 'top',
+            opacity: this.sceneOpacity,
+          });
+          App.canvas.setWidth(img.width).setHeight(img.height);
+          App.canvas.setOverlayImage(img, App.canvasScale);
+        });
+
+        // 脸
+        const firstUid = 0;
+        fabric.Image.fromURL(`./static/mugshots/${this.mugshots.find(ms => ms.dataUId === firstUid).imgSrc}`, (img) => {
+          if (img.getElement() === undefined) {
+            console.log('脸图片加载失败！');
+            return;
+          }
+          img.scale(1).setCoords();
+          img.set({
+            uid: firstUid,
+            left: this.parseHoles($firstScene.data('holes'))[0].left, // 606,
+            top: this.parseHoles($firstScene.data('holes'))[0].top, // 355,
+          });
+          App.canvas.add(img);
+          App.canvas.setActiveObject(img);
+          App.showObjProps(img);
+        });
+
+        App.canvasScale();
+
+        App.canvas.on({
+          'selection:cleared': () => {
+            // $('#canvasPopover').popover('destroy');
+            // App.contextMenu.hide();
+          },
+          'selection:created': () => {
+            // d();
+          },
+          'object:moving': (b) => {
+            App.showObjProps(b.target);
+            // d();
+          },
+          'object:scaling': (b) => {
+            App.showObjProps(b.target);
+            // d();
+          },
+          'object:selected': (bb) => {
+            const b = bb.target;
+            // App.showContextMenu(b, !0);
+            App.showObjProps(b);
+          },
+          'object:rotating': (b) => {
+            App.showObjProps(b.target);
+          },
+          'object:removed': () => {
+            $('#objProps').hide();
+          },
+          // 'mouse:down': (b) => {
+          //   let c = ZM.getActive(),
+          //     d = (new Date()).getTime();
+          //   if (c !== null) {
+          //     return d - ZM.dblClickTime < 400 ? (b.e.preventDefault(),
+          //               b.e.stopPropagation(),
+          //               c.obj.type == 'bubblytext'
+          //                 ? ZM.bubble()
+          //                 : c.obj.type == 'text' && ZM.text()) : ZM.showContextMenu(c.obj),
+          //               ZM.dblClickTime = d,
+          //               !1;
+          //   }
+          // },
+        });
+
+        // window.addEventListener('resize', App.canvasScale);
+      } catch (error) {
+        console.log('something is wrong with fabric init:', error);
+      }
+    });
   },
   methods: {
+    /**
+     * @param {Array} holes 背景上抠出的洞（用于放脸），比如['596,353 689x410 0']
+     */
+    parseHoles(holes) {
+      return holes.map((hole) => {
+        const part = hole.split(' ');
+        const offset = part[0].split(',');
+        const dimension = part[1].split('x');
+        return {
+          left: parseInt(offset[0], 10),
+          top: parseInt(offset[1], 10),
+          width: parseInt(dimension[0], 10),
+          height: parseInt(dimension[1], 10),
+          angle: parseInt(part[2], 10),
+        };
+      });
+    },
     handleChangeScene(event) {
+      /**
+       * @param {Array} g 比如['596,353 689x410 0']
+       * @param {Array} h
+       * @param {number} c
+       */
       function b(g, h, c) {
+        // g[c] = '596,353 689x410 0'
         const dd = g[c].split(' ');
         const ee = dd[0].split(',');
         const f = +ee[0];
@@ -228,6 +305,7 @@ export default {
         const d = ddd.data('size').split('x');
         const t = +d[0];
         const u = +d[1];
+        // 脸
         fabric.Image.fromURL(n, (img) => {
           img.set({
             url: n,
@@ -268,10 +346,10 @@ export default {
       });
       App.canvas.setWidth(l).setHeight(d);
       App.canvasScale();
-      // fabric.Image.fromURL(`./static/scenes/${$thumbImage.data('src')}`, (img) => {
-      fabric.Image.fromURL(`./${$thumbImage.data('src')}`, (img) => {
+      // 场景
+      fabric.Image.fromURL($thumbImage.data('src'), (img) => {
         App.scene = {
-          // $img: $thumbImage,
+          $img: $thumbImage,
           fabricImg: img,
         };
         img.set({
