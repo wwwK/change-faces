@@ -65,6 +65,10 @@ Vue.use(BootstrapVue);
 
 const defaultSceneOpacity = 0.5;
 
+// mock object
+const bootbox = {};
+const lib = {};
+
 const App = {
   dblClickTime: 0,
   scaleFactor: 1,
@@ -91,13 +95,68 @@ const App = {
     App.canvas.renderAll();
     // (canvasWidth = App.canvas.getActiveObject()) && App.repositionContextMenu(canvasWidth);
   },
+  getActive() {
+    const d = App.canvas.getActiveObject();
+    const c = App.canvas.getActiveGroup();
+    return d || c
+      ? {
+        obj: c || d,
+        type: c ? 'group' : 'object',
+      }
+      : null;
+  },
+  objRemove(d) {
+    function c(bb) {
+      const cc = bb.uid;
+      App.canvas.remove(bb);
+      $(`#mugshots img[data-uid="${cc}"]`).removeClass('oncanvas');
+    }
+    function b(e) {
+      if (e.type === 'group') {
+        App.canvas.discardActiveGroup();
+        e.obj.forEachObject((bb) => {
+          c(bb);
+        });
+      } else {
+        c(e.obj);
+      }
+      App.canvas.deactivateAll().renderAll();
+      // App.contextMenu.hide();
+    }
+    const e = App.getActive();
+    if (e !== null) {
+      if (d) {
+        b(e);
+      } else {
+        $('#canvasPopover').popover('destroy');
+        bootbox.confirm({
+          message: lib.word(e.type === 'group' ? 4141 : 4140),
+          buttons: {
+            cancel: {
+              label: lib.word(4E3),
+            },
+            confirm: {
+              label: lib.word(4001),
+            },
+          },
+          callback(cc) {
+            if (cc) {
+              b(e);
+            }
+          },
+        });
+      }
+    }
+  },
   showObjProps(d) {
     let c = Math.round(d.angle);
     // c >= 360 && (c -= 360);
     if (c >= 360) {
       c -= 360;
     }
-    $('#objProps').show().html(`${Math.round(d.left)},${Math.round(d.top)} | ${Math.round(d.width * d.scaleX)}x${Math.round(d.height * d.scaleY)} | ${c}&deg;`);
+    $('#objProps').show().html(`${Math.round(d.left)},${Math.round(d.top)}
+      | ${Math.round(d.width * d.scaleX)}x${Math.round(d.height * d.scaleY)}
+      | ${c}&deg;`);
   },
 };
 
@@ -144,6 +203,16 @@ export default {
           dataUId: 0,
           dataSize: '159x190',
         },
+        {
+          imgSrc: '0FleDCyukv.png',
+          dataUId: 0,
+          dataSize: '151x221',
+        },
+        {
+          imgSrc: '01100000000000144728618086243_s.png',
+          dataUId: 0,
+          dataSize: '92x110',
+        },
       ],
     };
   },
@@ -153,7 +222,7 @@ export default {
         // override default setting
         fabric.Object.prototype.originX = 'center';
         fabric.Object.prototype.originY = 'center';
-        fabric.Object.prototype.cornerColor = 'yellow';
+        fabric.Object.prototype.cornerColor = 'red'; // 'yellow';
         fabric.Object.prototype.borderColor = 'red';
         fabric.Object.prototype.cornerSize = 16;
 
@@ -164,17 +233,16 @@ export default {
           stopContextMenu: !0,
         });
 
-        // create a rectangle object
-        const rect = new fabric.Rect({
-          left: 100,
-          top: 100,
-          fill: 'red',
-          width: 20,
-          height: 20,
-        });
-
-        // "add" rectangle onto canvas
-        App.canvas.add(rect);
+        // // create a rectangle object
+        // const rect = new fabric.Rect({
+        //   left: 100,
+        //   top: 100,
+        //   fill: 'red',
+        //   width: 20,
+        //   height: 20,
+        // });
+        // // "add" rectangle onto canvas
+        // App.canvas.add(rect);
 
         const $firstScene = $('#scenes img:first');
 
@@ -199,7 +267,8 @@ export default {
 
         // 脸
         const firstUid = 0;
-        fabric.Image.fromURL(`./static/mugshots/${this.mugshots.find(ms => ms.dataUId === firstUid).imgSrc}`, (img) => {
+        const mugshot = `./static/mugshots/${this.mugshots.find(ms => ms.dataUId === firstUid).imgSrc}`;
+        fabric.Image.fromURL(mugshot, (img) => {
           if (img.getElement() === undefined) {
             console.log('脸图片加载失败！');
             return;
@@ -245,15 +314,15 @@ export default {
             $('#objProps').hide();
           },
           // 'mouse:down': (b) => {
-          //   let c = ZM.getActive(),
+          //   let c = App.getActive(),
           //     d = (new Date()).getTime();
           //   if (c !== null) {
-          //     return d - ZM.dblClickTime < 400 ? (b.e.preventDefault(),
+          //     return d - App.dblClickTime < 400 ? (b.e.preventDefault(),
           //               b.e.stopPropagation(),
           //               c.obj.type == 'bubblytext'
-          //                 ? ZM.bubble()
-          //                 : c.obj.type == 'text' && ZM.text()) : ZM.showContextMenu(c.obj),
-          //               ZM.dblClickTime = d,
+          //                 ? App.bubble()
+          //                 : c.obj.type == 'text' && App.text()) : App.showContextMenu(c.obj),
+          //               App.dblClickTime = d,
           //               !1;
           //   }
           // },
@@ -366,8 +435,99 @@ export default {
         });
       });
     },
-    handleChangeMugshot() {
-
+    // 换头像
+    handleChangeMugshot(event) {
+      const c = [];
+      const bbb = App.scene.$img.data('holes');
+      const d = [];
+      let gg = App.getActive();
+      if (gg !== null && gg.type === 'object' && gg.obj.type === 'image') {
+        App.objRemove(!0);
+        gg = null;
+      }
+      App.canvas.forEachObject((bb) => {
+        if (bb.type === 'image') {
+          c.push({
+            uid: bb.uid,
+            left: bb.left,
+            top: bb.top,
+            width: bb.width * bb.scaleX,
+            height: bb.height * bb.scaleY,
+            angle: bb.angle,
+          });
+        }
+      });
+      if (gg === null && c.length >= App.scene.$img.data('holes').length) {
+        bootbox.alert(lib.word(3510));
+      } else {
+        for (let ii = 0; ii < bbb.length; ii += 1) {
+          const ll = bbb[ii].split(' ');
+          const hhh = ll[0].split(',');
+          const k = +hhh[0];
+          const v = +hhh[1];
+          const hh = ll[1].split('x');
+          const w = +hh[0];
+          const h = +hh[1];
+          const l = +ll[2];
+          let y = 0;
+          let x = 0;
+          for (; x < c.length; x += 1) {
+            const p = c[x];
+// p.left >= k - w / 2 && p.left <= k + w / 2 && p.top >= v - h / 2 && p.top <= v + h / 2 || y++;
+            if (p.left >= k - (w / 2)
+              && p.left <= k + (w / 2)
+              && p.top >= v - (h / 2)
+              && p.top <= v + (h / 2)) {
+              console.log('xxdebug');
+            } else {
+              y += 1;
+            }
+          }
+          if (y === c.length) {
+            d.push({
+              left: k,
+              top: v,
+              width: w,
+              height: h,
+              angle: l,
+            });
+          }
+        }
+        const q = $(/* this */event.target).data('uid');
+        const b = $(/* this */event.target).attr('src');
+        const kk = $(/* this */event.target).data('size').split('x');
+        const ggg = +kk[0];
+        const k = +kk[1];
+        let r = App.canvas.getWidth() / 2;
+        let m = App.canvas.getHeight() / 2;
+        let n = 0;
+        let t = 1;
+        let u = 1;
+        if (d.length > 0) {
+          r = d[0].left;
+          m = d[0].top;
+          t = d[0].width / ggg;
+          u = d[0].height / k;
+          n = d[0].angle;
+        }
+        fabric.Image.fromURL(b, (bb) => {
+          bb.set({
+            uid: q,
+            left: r,
+            top: m,
+            angle: n,
+            originX: 'center',
+            originY: 'center',
+            scaleX: t,
+            scaleY: u,
+          });
+          if (d.length === 0) {
+            bb.scaleToHeight(200);
+          }
+          App.canvas.add(bb).setActiveObject(bb).renderAll();
+          $(`#mugshots img[data-uid="${q}"]`).addClass('oncanvas');
+        });
+      }
     },
   },
   watch: {
@@ -386,7 +546,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   /*text-align: center;*/
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 15px; /* 60px; */
 }
 
 /* 换背景和换头像 */
@@ -407,6 +567,9 @@ export default {
     display: inline-block;
     margin-right: 4px;
     cursor: pointer;
+    img {
+      height: 100px;
+    }
   }
 }
 
