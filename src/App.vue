@@ -8,8 +8,8 @@
           <div class="scene" v-for="scene in scenes">
             <img
               @click="handleChangeScene"
-              :src="'../static/scenes/' + scene.imgSrc"
-              :data-src="'./static/scenes/' + scene.dataSrc"
+              :src="`./static/scenes/${scene.imgSrc}`"
+              :data-src="`./static/scenes/${scene.dataSrc}`"
               :data-size="scene.dataSize"
               :data-holes="scene.dataHoles"
             >
@@ -19,7 +19,7 @@
           <div class="mugshot" v-for="mugshot in mugshots">
             <img
               @click="handleChangeMugshot"
-              :src="`../static/mugshots/${mugshot.imgSrc}`"
+              :src="`./static/mugshots/${mugshot.imgSrc}`"
               :data-uid="mugshot.dataUId"
               :data-size="mugshot.dataSize"
             >
